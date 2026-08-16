@@ -4,6 +4,8 @@ import { attachChatWebSocket, closeChatHub, getChatHub, loadChatConfig } from '.
 
 const PORT = Number(process.env.PORT) || 4001;
 const config = loadChatConfig();
+const appUrl = new URL(config.publicUrl || `http://localhost:${PORT}`);
+const wsUrl = `${appUrl.protocol === 'https:' ? 'wss' : 'ws'}://${appUrl.host}${config.wsPath}`;
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
@@ -16,6 +18,7 @@ const server = http.createServer(async (req, res) => {
         status: 'chat server running',
         room: config.defaultRoom,
         wsPath: config.wsPath,
+        wsUrl,
       }),
     );
     return;
@@ -28,6 +31,7 @@ const server = http.createServer(async (req, res) => {
       JSON.stringify({
         room: hub.getDefaultRoom(),
         wsPath: hub.getWsPath(),
+        wsUrl,
         description: 'IRC-style common room over WebSockets',
       }),
     );
@@ -91,8 +95,8 @@ async function bootstrap() {
   attachChatWebSocket(server, config);
 
   server.listen(PORT, () => {
-    console.log(`Chat server listening on http://localhost:${PORT}`);
-    console.log(`WebSocket endpoint: ws://localhost:${PORT}${config.wsPath}`);
+    console.log(`Chat server listening on ${config.publicUrl}`);
+    console.log(`WebSocket endpoint: ${wsUrl}`);
   });
 
   const shutdown = async (signal: string) => {

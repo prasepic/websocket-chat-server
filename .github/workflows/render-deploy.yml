@@ -39,13 +39,13 @@ jobs:
     steps:
       - name: Trigger Render production deploy
         env:
-          RENDER_PRODUCTION_DEPLOY_HOOK_URL: ${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK_URL }}
+          RENDER_URL: https://websocket-chat-server-qy0f.onrender.com
         run: |
-          if [ -z "$RENDER_PRODUCTION_DEPLOY_HOOK_URL" ]; then
-            echo "Missing RENDER_PRODUCTION_DEPLOY_HOOK_URL secret."
+          if [ -z "$RENDER_URL" ]; then
+            echo "Missing Render URL."
             exit 1
           fi
-          curl -fsS -X POST "$RENDER_PRODUCTION_DEPLOY_HOOK_URL"
+          curl -fsS -X POST "$RENDER_URL"
 
   deploy-preview:
     needs: test

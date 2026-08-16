@@ -31,6 +31,8 @@ export interface ChatConfig {
   historyLimit: number;
   /** WebSocket path mounted on the HTTP server. */
   wsPath: string;
+  /** Public application URL, used to build websocket links in production. */
+  publicUrl: string;
 }
 
 /** Client → server frames */
