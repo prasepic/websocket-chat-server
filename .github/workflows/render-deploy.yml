@@ -1,0 +1,63 @@
+name: Render Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-fund --no-audit
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+  deploy-production:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render production deploy
+        env:
+          RENDER_PRODUCTION_DEPLOY_HOOK_URL: ${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_PRODUCTION_DEPLOY_HOOK_URL" ]; then
+            echo "Missing RENDER_PRODUCTION_DEPLOY_HOOK_URL secret."
+            exit 1
+          fi
+          curl -fsS -X POST "$RENDER_PRODUCTION_DEPLOY_HOOK_URL"
+
+  deploy-preview:
+    needs: test
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render preview deploy
+        env:
+          RENDER_PREVIEW_DEPLOY_HOOK_URL: ${{ secrets.RENDER_PREVIEW_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_PREVIEW_DEPLOY_HOOK_URL" ]; then
+            echo "Missing RENDER_PREVIEW_DEPLOY_HOOK_URL secret."
+            exit 1
+          fi
+          curl -fsS -X POST "$RENDER_PREVIEW_DEPLOY_HOOK_URL"
